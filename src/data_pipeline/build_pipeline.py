@@ -6,10 +6,10 @@ Output : data/bronze/orders_raw.parquet      (Bronze: raw copy, no changes)
          data/silver/orders_clean.parquet    (Silver: cleaned data)
          db/food_delivery.duckdb             (Gold: restaurants, riders, orders, deliveries)
 
-How to run:
-    1. Place this file in a project folder that contains data/raw/train.csv.
+How to run (from the repository root):
+    1. Place train.csv in data/raw/.
     2. pip install duckdb pandas
-    3. python 01_build_pipeline.py
+    3. python src/data_pipeline/build_pipeline.py
 """
 
 from datetime import datetime
@@ -191,12 +191,13 @@ print(f"[Silver] rows: {n_silver:,}  ->  {SILVER_FILE.name}")
 # table. The riders table only stores the average rating.
 
 # 3a. restaurants (440 restaurants)
+# Note: city_type (Urban / Semi-Urban / Metropolitan) is NOT stored here, because
+# the same restaurant has orders with different city types. It lives in orders.
 con.execute("""
 CREATE OR REPLACE TABLE restaurants AS
 SELECT
     restaurant_id,
     ANY_VALUE(city_code)               AS city_code,
-    MODE(city_type)                    AS city_type,       -- most frequent city type
     ROUND(MEDIAN(restaurant_lat), 6)   AS latitude,        -- median reduces the effect of bad values
     ROUND(MEDIAN(restaurant_lon), 6)   AS longitude
 FROM silver_orders
@@ -226,6 +227,7 @@ SELECT
     order_date,
     order_time,
     order_type,
+    city_type,                         -- area type of the order (Urban, Semi-Urban, Metropolitan)
     festival,
     multiple_deliveries
 FROM silver_orders
