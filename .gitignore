@@ -6,3 +6,5 @@ data/
 db/
 *.parquet
 *.duckdb
+outputs/
+*.zip

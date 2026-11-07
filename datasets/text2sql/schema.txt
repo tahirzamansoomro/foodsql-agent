@@ -1,0 +1,61 @@
+DuckDB database schema:
+
+Table restaurants (primary key: restaurant_id)
+  restaurant_id VARCHAR
+  city_code VARCHAR  -- short city code, for example JAP or MUM
+  latitude DOUBLE
+  longitude DOUBLE
+  Values of city_code: 'AGR', 'ALH', 'AURG', 'BANG', 'BHP', 'CHEN', 'COIMB', 'DEH', 'GOA', 'HYD', 'INDO', 'JAP', 'KNP', 'KOC', 'KOL', 'LUDH', 'MUM', 'MYS', 'PUNE', 'RANCHI', 'SUR', 'VAD'
+
+Table riders (primary key: rider_id)
+  rider_id VARCHAR
+  restaurant_id VARCHAR
+  total_deliveries BIGINT  -- number of deliveries made by the rider
+  avg_rating DOUBLE  -- average rating of the rider
+  avg_delivery_minutes DOUBLE  -- average delivery time of the rider in minutes
+  Foreign key: riders.restaurant_id -> restaurants.restaurant_id
+
+Table customers (primary key: customer_id)
+  customer_id VARCHAR
+  city_code VARCHAR
+  signup_date DATE
+  membership VARCHAR
+  Values of membership: 'Free', 'Plus'
+
+Table orders (primary key: order_id)
+  order_id VARCHAR
+  restaurant_id VARCHAR
+  rider_id VARCHAR
+  customer_id VARCHAR
+  order_date DATE
+  order_time TIME
+  order_type VARCHAR
+  city_type VARCHAR  -- area type of the order
+  festival VARCHAR  -- Yes if the order was placed on a festival day
+  multiple_deliveries INTEGER
+  order_amount BIGINT  -- value of the order
+  payment_method VARCHAR
+  Foreign key: orders.restaurant_id -> restaurants.restaurant_id
+  Foreign key: orders.rider_id -> riders.rider_id
+  Foreign key: orders.customer_id -> customers.customer_id
+  Values of order_type: 'Buffet', 'Drinks', 'Meal', 'Snack'
+  Values of city_type: 'Metropolitan', 'Semi-Urban', 'Urban'
+  Values of festival: 'No', 'Yes'
+  Values of payment_method: 'Card', 'Cash', 'Wallet'
+
+Table deliveries (primary key: order_id)
+  order_id VARCHAR
+  pickup_time TIME
+  pickup_wait_min BIGINT  -- minutes between ordering and pickup
+  time_taken_min INTEGER  -- delivery duration in minutes
+  distance_km DOUBLE  -- straight-line distance from restaurant to customer in km
+  weather VARCHAR
+  road_traffic VARCHAR
+  vehicle_type VARCHAR
+  vehicle_condition INTEGER
+  rider_age INTEGER  -- age of the rider at the time of delivery
+  rider_rating DOUBLE  -- rating of the rider at the time of delivery
+  Foreign key: deliveries.order_id -> orders.order_id
+  Values of weather: 'Cloudy', 'Fog', 'Sandstorms', 'Stormy', 'Sunny', 'Windy'
+  Values of road_traffic: 'High', 'Jam', 'Low', 'Medium'
+  Values of vehicle_type: 'bicycle', 'electric_scooter', 'motorcycle', 'scooter'
