@@ -90,3 +90,76 @@ Ca (2) | Binder Error: Referenced column "time_taken_min" not found in FROM cla 
 **test_061** (held_out, hard): Count the customers who never used Cash as a payment method.
 - gold: `SELECT COUNT(*) AS n_customers FROM customers c WHERE NOT EXISTS (SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id AND o.payment_method = 'Cash')`
 - model: `SELECT COUNT(*) AS n_customers FROM customers WHERE payment_method != 'Cash'`
+
+## gemini-3.5-flash-lite_loop
+- failed 28 of 81: 0 did not run, 28 ran but returned a wrong result
+- templates with most failures: M13 (5), X01 (5), X13 (5), H01 (3), H10 (3), X02 (1)
+
+**test_004** (in_dist, hard): List the 3 restaurants in INDO with the highest average delivery time.
+- gold: `SELECT o.restaurant_id, ROUND(AVG(d.time_taken_min), 2) AS avg_minutes FROM orders o JOIN deliveries d USING (order_id) JOIN restaurants r USING (restaurant_id) WHERE r.city_code = 'INDO' GROUP BY o.restaurant_id ORDER BY avg_minutes DESC, o.restaurant_id LIMIT 3`
+- model: `SELECT r.restaurant_id
+FROM restaurants r
+JOIN riders rd ON r.restaurant_id = rd.restaurant_id
+WHERE r.city_code = 'INDO'
+GROUP BY r.restaurant_id
+ORDER BY AVG(rd.avg_delivery_minutes) DESC, r.restaurant_id ASC
+LIMIT 3`
+
+**test_006** (in_dist, hard): Average order amount per area type in BANG.
+- gold: `SELECT o.city_type, ROUND(AVG(o.order_amount), 2) AS avg_amount FROM orders o JOIN restaurants r USING (restaurant_id) WHERE r.city_code = 'BANG' GROUP BY o.city_type ORDER BY avg_amount DESC, o.city_type`
+- model: `SELECT o.city_type, AVG(o.order_amount) AS avg_order_amount FROM orders o JOIN restaurants r ON o.restaurant_id = r.restaurant_id WHERE r.city_code = 'BANG' GROUP BY o.city_type ORDER BY o.city_type ASC`
+
+**test_008** (in_dist, medium): Show 10 orders paid with Card that cost over 1500.
+- gold: `SELECT order_id, order_amount FROM orders WHERE payment_method = 'Card' AND order_amount > 1500 ORDER BY order_amount DESC, order_id LIMIT 10`
+- model: `SELECT order_id, restaurant_id, rider_id, customer_id, order_date, order_time, order_type, city_type, festival, multiple_deliveries, order_amount, payment_method
+FROM orders
+WHERE payment_method = 'Card' AND order_amount > 1500
+ORDER BY order_id ASC
+LIMIT 10`
+
+**test_010** (in_dist, medium): Show 3 orders paid with Cash that cost over 1000.
+- gold: `SELECT order_id, order_amount FROM orders WHERE payment_method = 'Cash' AND order_amount > 1000 ORDER BY order_amount DESC, order_id LIMIT 3`
+- model: `SELECT order_id
+FROM orders
+WHERE payment_method = 'Cash' AND order_amount > 1000
+ORDER BY order_id ASC
+LIMIT 3`
+
+## gemini-3.5-flash-lite_noloop
+- failed 30 of 81: 0 did not run, 30 ran but returned a wrong result
+- templates with most failures: M13 (5), X01 (5), X13 (5), H01 (4), H10 (4), H03 (1)
+
+**test_004** (in_dist, hard): List the 3 restaurants in INDO with the highest average delivery time.
+- gold: `SELECT o.restaurant_id, ROUND(AVG(d.time_taken_min), 2) AS avg_minutes FROM orders o JOIN deliveries d USING (order_id) JOIN restaurants r USING (restaurant_id) WHERE r.city_code = 'INDO' GROUP BY o.restaurant_id ORDER BY avg_minutes DESC, o.restaurant_id LIMIT 3`
+- model: `SELECT r.restaurant_id
+FROM restaurants r
+JOIN riders rd ON r.restaurant_id = rd.restaurant_id
+WHERE r.city_code = 'INDO'
+GROUP BY r.restaurant_id
+ORDER BY AVG(rd.avg_delivery_minutes) DESC, r.restaurant_id ASC
+LIMIT 3`
+
+**test_006** (in_dist, hard): Average order amount per area type in BANG.
+- gold: `SELECT o.city_type, ROUND(AVG(o.order_amount), 2) AS avg_amount FROM orders o JOIN restaurants r USING (restaurant_id) WHERE r.city_code = 'BANG' GROUP BY o.city_type ORDER BY avg_amount DESC, o.city_type`
+- model: `SELECT o.city_type, AVG(o.order_amount) AS avg_order_amount
+FROM orders o
+JOIN restaurants r ON o.restaurant_id = r.restaurant_id
+WHERE r.city_code = 'BANG'
+GROUP BY o.city_type
+ORDER BY o.city_type ASC`
+
+**test_008** (in_dist, medium): Show 10 orders paid with Card that cost over 1500.
+- gold: `SELECT order_id, order_amount FROM orders WHERE payment_method = 'Card' AND order_amount > 1500 ORDER BY order_amount DESC, order_id LIMIT 10`
+- model: `SELECT order_id, restaurant_id, rider_id, customer_id, order_date, order_time, order_type, city_type, festival, multiple_deliveries, order_amount, payment_method
+FROM orders
+WHERE payment_method = 'Card' AND order_amount > 1500
+ORDER BY order_id ASC
+LIMIT 10`
+
+**test_010** (in_dist, medium): Show 3 orders paid with Cash that cost over 1000.
+- gold: `SELECT order_id, order_amount FROM orders WHERE payment_method = 'Cash' AND order_amount > 1000 ORDER BY order_amount DESC, order_id LIMIT 3`
+- model: `SELECT order_id
+FROM orders
+WHERE payment_method = 'Cash' AND order_amount > 1000
+ORDER BY order_id ASC
+LIMIT 3`

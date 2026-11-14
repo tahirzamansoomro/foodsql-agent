@@ -1,0 +1,94 @@
+{
+  "tag": "gemini_smoke",
+  "summary": {
+    "overall": {
+      "n": 3,
+      "execution_accuracy": 100.0,
+      "valid_sql_rate": 100.0,
+      "avg_latency_s": 1.46,
+      "avg_attempts": 1.0,
+      "total_cost_usd": 0.0012
+    },
+    "by_split": {
+      "in_dist": {
+        "n": 3,
+        "execution_accuracy": 100.0,
+        "valid_sql_rate": 100.0,
+        "avg_latency_s": 1.46,
+        "avg_attempts": 1.0,
+        "total_cost_usd": 0.0012
+      }
+    },
+    "by_difficulty": {
+      "hard": {
+        "n": 2,
+        "execution_accuracy": 100.0,
+        "valid_sql_rate": 100.0,
+        "avg_latency_s": 1.47,
+        "avg_attempts": 1.0,
+        "total_cost_usd": 0.0008
+      },
+      "medium": {
+        "n": 1,
+        "execution_accuracy": 100.0,
+        "valid_sql_rate": 100.0,
+        "avg_latency_s": 1.42,
+        "avg_attempts": 1.0,
+        "total_cost_usd": 0.0003
+      }
+    }
+  },
+  "records": [
+    {
+      "id": "test_000",
+      "split": "in_dist",
+      "difficulty": "medium",
+      "template_id": "M01",
+      "question": "Count the orders for restaurants located in AURG.",
+      "gold_sql": "SELECT COUNT(*) AS total_orders FROM orders o JOIN restaurants r USING (restaurant_id) WHERE r.city_code = 'AURG'",
+      "pred_sql": "SELECT count(o.order_id) FROM orders o JOIN restaurants r ON o.restaurant_id = r.restaurant_id WHERE r.city_code = 'AURG'",
+      "correct": true,
+      "executes": true,
+      "error": null,
+      "attempts": 1,
+      "latency_s": 1.4178521000000046,
+      "input_tokens": 808,
+      "output_tokens": 38,
+      "cost_usd": 0.00033739999999999996
+    },
+    {
+      "id": "test_001",
+      "split": "in_dist",
+      "difficulty": "hard",
+      "template_id": "H04",
+      "question": "Number of customers from MYS who ordered more than 12 times?",
+      "gold_sql": "SELECT COUNT(*) AS n_customers FROM (SELECT c.customer_id FROM customers c JOIN orders o USING (customer_id) WHERE c.city_code = 'MYS' GROUP BY c.customer_id HAVING COUNT(*) > 12) t",
+      "pred_sql": "SELECT count(*) FROM (SELECT c.customer_id FROM customers AS c JOIN orders AS o ON c.customer_id = o.customer_id WHERE c.city_code = 'MYS' GROUP BY c.customer_id HAVING count(o.order_id) > 12) AS sub",
+      "correct": true,
+      "executes": true,
+      "error": null,
+      "attempts": 1,
+      "latency_s": 1.3735023840000053,
+      "input_tokens": 813,
+      "output_tokens": 65,
+      "cost_usd": 0.00040639999999999996
+    },
+    {
+      "id": "test_002",
+      "split": "in_dist",
+      "difficulty": "hard",
+      "template_id": "H04",
+      "question": "Number of customers from LUDH who ordered more than 12 times?",
+      "gold_sql": "SELECT COUNT(*) AS n_customers FROM (SELECT c.customer_id FROM customers c JOIN orders o USING (customer_id) WHERE c.city_code = 'LUDH' GROUP BY c.customer_id HAVING COUNT(*) > 12) t",
+      "pred_sql": "SELECT COUNT(*) FROM (SELECT t1.customer_id FROM customers AS t1 JOIN orders AS t2 ON t1.customer_id = t2.customer_id WHERE t1.city_code = 'LUDH' GROUP BY t1.customer_id HAVING COUNT(t2.order_id) > 12) AS sub",
+      "correct": true,
+      "executes": true,
+      "error": null,
+      "attempts": 1,
+      "latency_s": 1.5747200550000002,
+      "input_tokens": 814,
+      "output_tokens": 74,
+      "cost_usd": 0.00042919999999999997
+    }
+  ]
+}

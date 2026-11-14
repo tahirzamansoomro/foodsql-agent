@@ -14,6 +14,7 @@ Examples (run from the repository root):
     python src/evaluation/run_eval.py --model hf --model-id Qwen/Qwen2.5-Coder-3B-Instruct
     python src/evaluation/run_eval.py --model hf --model-id Qwen/Qwen2.5-Coder-3B-Instruct --no-loop
     python src/evaluation/run_eval.py --model openai --model-id gpt-4o
+    python src/evaluation/run_eval.py --model gemini --model-id gemini-3.5-flash-lite
 
     # 4. A fine-tuned model (QLoRA adapter folder)
     python src/evaluation/run_eval.py --model hf --model-id Qwen/Qwen2.5-Coder-7B-Instruct --adapter outputs/qwen7b-lora
@@ -60,7 +61,11 @@ def evaluate(con, items, agent, progress=None):
         gold_rows, gold_error = execute_rows(con, item["sql"])
         if gold_error:  # should never happen; reported instead of hidden
             raise RuntimeError(f"Gold SQL failed for {item['id']}: {gold_error}")
-        res = agent.answer(item["question"])
+        try:
+            res = agent.answer(item["question"])
+        except RuntimeError as exc:  # for example the daily API limit: keep what we have so far
+            print(f"\n[Stopped early after {len(records)} questions] {exc}")
+            break
         pred_rows, pred_error = execute_rows(con, res["sql"]) if res["sql"] else (None, "empty query")
         executes = pred_error is None
         correct = executes and results_match(gold_rows, pred_rows, "ORDER BY" in item["sql"].upper())
@@ -90,7 +95,8 @@ def main():
     from tqdm import tqdm
 
     p = argparse.ArgumentParser()
-    p.add_argument("--model", choices=["oracle", "openai", "hf"], required=True)
+    p.add_argument("--model", choices=["oracle", "openai", "gemini", "hf"], required=True)
+    p.add_argument("--rpm", type=int, default=8, help="Gemini: maximum requests per minute")
     p.add_argument("--model-id", default=None)
     p.add_argument("--adapter", default=None, help="folder of a QLoRA adapter (fine-tuned model)")
     p.add_argument("--no-loop", action="store_true", help="single attempt, no self-correction")
@@ -114,6 +120,9 @@ def main():
     elif args.model == "openai":
         from src.agent.models import OpenAIModel
         model = OpenAIModel(args.model_id or "gpt-4o")
+    elif args.model == "gemini":
+        from src.agent.models import GeminiModel
+        model = GeminiModel(args.model_id or "gemini-3.5-flash-lite", rpm=args.rpm)
     else:
         from src.agent.models import HFModel
         if not args.model_id:
@@ -125,10 +134,13 @@ def main():
                      max_repairs=args.max_repairs)
 
     records = evaluate(con, items, agent, progress=lambda x: tqdm(x, desc=model.name))
+    if not records:
+        raise SystemExit("No question was answered, nothing to save.")
     summary = summarize(records)
 
     tag = args.tag or f"{model.name}_{'noloop' if args.no_loop else 'loop'}" + (
-        f"_{args.split}" if args.split != "all" else "") + (f"_n{args.limit}" if args.limit else "")
+        f"_{args.split}" if args.split != "all" else "") + (f"_n{args.limit}" if args.limit else "") + (
+        "_partial" if len(records) < len(items) else "")
     out = Path("results") / f"{tag}.json"
     out.parent.mkdir(exist_ok=True)
     out.write_text(json.dumps({"tag": tag, "summary": summary, "records": records}, indent=2), encoding="utf-8")

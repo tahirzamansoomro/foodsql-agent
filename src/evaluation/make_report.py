@@ -57,7 +57,7 @@ def accuracy_cell(rows):
 
 def build_table(runs):
     header = ["Model", "Loop", "Execution accuracy", "In-distribution", "Held-out templates",
-              "Valid SQL %", "Latency (s)", "Attempts", "Cost ($)"]
+              "Valid SQL %", "Latency (s)", "Attempts", "Cost ($, list price)"]
     lines = [header]
     for run in sorted(runs, key=lambda r: (r["model"], r["loop"])):
         recs = run["records"]

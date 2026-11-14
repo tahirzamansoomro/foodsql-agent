@@ -1,6 +1,8 @@
-| Model | Loop | Execution accuracy | In-distribution | Held-out templates | Valid SQL % | Latency (s) | Attempts | Cost ($) |
+| Model | Loop | Execution accuracy | In-distribution | Held-out templates | Valid SQL % | Latency (s) | Attempts | Cost ($, list price) |
 |---|---|---|---|---|---|---|---|---|
 | Qwen2.5-Coder-1.5B-Instruct | loop | 37.0% (30/81; CI 27-48) | 45.3% (24/53; CI 33-59) | 21.4% (6/28; CI 10-40) | 81.5 | 5.18 | 1.70 | 0.000 |
 | Qwen2.5-Coder-1.5B-Instruct | no loop | 33.3% (27/81; CI 24-44) | 39.6% (21/53; CI 28-53) | 21.4% (6/28; CI 10-40) | 70.4 | 2.07 | 1.00 | 0.000 |
 | Qwen2.5-Coder-1.5B-Instruct+lora | loop | 80.2% (65/81; CI 70-87) | 100.0% (53/53; CI 93-100) | 42.9% (12/28; CI 27-61) | 97.5 | 3.97 | 1.05 | 0.000 |
 | Qwen2.5-Coder-1.5B-Instruct+lora | no loop | 80.2% (65/81; CI 70-87) | 100.0% (53/53; CI 93-100) | 42.9% (12/28; CI 27-61) | 96.3 | 4.02 | 1.00 | 0.000 |
+| gemini-3.5-flash-lite | loop | 65.4% (53/81; CI 55-75) | 79.2% (42/53; CI 67-88) | 39.3% (11/28; CI 24-58) | 100.0 | 1.66 | 1.00 | 0.031 |
+| gemini-3.5-flash-lite | no loop | 63.0% (51/81; CI 52-73) | 73.6% (39/53; CI 60-84) | 42.9% (12/28; CI 27-61) | 100.0 | 1.36 | 1.00 | 0.032 |

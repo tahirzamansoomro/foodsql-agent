@@ -23,7 +23,7 @@ ROOT = Path.cwd()
 PACKAGES = [
     ("duckdb", "duckdb"), ("pandas", "pandas"), ("numpy", "numpy"),
     ("yaml", "pyyaml"), ("dotenv", "python-dotenv"), ("tqdm", "tqdm"),
-    ("openai", "openai"), ("flask", "flask"), ("flask_cors", "flask-cors"),
+    ("openai", "openai"), ("google.genai", "google-genai"), ("flask", "flask"), ("flask_cors", "flask-cors"),
     ("torch", "torch"), ("transformers", "transformers"), ("accelerate", "accelerate"),
     ("peft", "peft"), ("trl", "trl"), ("bitsandbytes", "bitsandbytes"),
     ("datasets", "datasets"), ("huggingface_hub", "huggingface_hub"), ("wandb", "wandb"),
@@ -134,6 +134,7 @@ def main():
     except Exception:
         pass
     print("  OPENAI_API_KEY set:", "yes" if os.environ.get("OPENAI_API_KEY") else "no")
+    print("  GEMINI_API_KEY set:", "yes" if os.environ.get("GEMINI_API_KEY") else "no")
 
     section("Summary")
     if problems:
