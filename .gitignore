@@ -1,10 +1,39 @@
+
+# Environment and secrets
 .env
+.env.*
+!.env.example
 .venv/
+venv/
+
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
+*.pyo
+
+# Data and databases
 data/
 db/
 *.parquet
 *.duckdb
+*.duckdb.wal
+
+# Model outputs
 outputs/
+*.safetensors
+*.bin
+
+# Kafka installation files (local only)
+kafka_2.13-4.4.0/
+kafka_2.13-4.4.0.tgz
+kafka_2.13-4.4.0.tgz.*
+
+# Temporary files
 *.zip
+*.log
+.DS_Store
+Thumbs.db
+
+# Backup and download logs
+*.backup
+wget-log
