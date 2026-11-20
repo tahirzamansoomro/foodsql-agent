@@ -1,3 +1,4 @@
+
 import json
 import time
 from datetime import datetime
@@ -20,6 +21,7 @@ LOCK_RETRY_DELAY = 0.5
 
 def create_streaming_table():
     connection = duckdb.connect(DATABASE_PATH)
+
     try:
         connection.execute("""
             CREATE TABLE IF NOT EXISTS streaming_orders (
@@ -31,28 +33,59 @@ def create_streaming_table():
                 ingested_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
             )
         """)
+
+        # Add performance tracking columns to existing tables.
+        connection.execute("""
+            ALTER TABLE streaming_orders
+            ADD COLUMN IF NOT EXISTS sent_at TIMESTAMPTZ
+        """)
+
+        connection.execute("""
+            ALTER TABLE streaming_orders
+            ADD COLUMN IF NOT EXISTS consumer_received_at TIMESTAMPTZ
+        """)
+
     finally:
         connection.close()
 
 
+def parse_timestamp(value):
+    if not value:
+        return None
+
+    return datetime.fromisoformat(value)
+
+
 def write_batch(rows):
-    """Batch insert karo, phir connection turant band karo taaki FastAPI padh sake."""
+    """Insert a batch into DuckDB and close the connection."""
+
     for attempt in range(LOCK_RETRIES):
         try:
             connection = duckdb.connect(DATABASE_PATH)
+
             try:
                 connection.executemany("""
-                    INSERT INTO streaming_orders
-                        (order_id, status, amount, event_time, source)
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO streaming_orders (
+                        order_id,
+                        status,
+                        amount,
+                        event_time,
+                        source,
+                        sent_at,
+                        consumer_received_at
+                    )
+                    VALUES (?, ?, ?, ?, ?, ?, ?)
                     ON CONFLICT (order_id) DO NOTHING
                 """, rows)
+
             finally:
                 connection.close()
+
             return True
+
         except duckdb.IOException:
-            # FastAPI us waqt file padh rahi hai, thodi der baad dobara try karo
             time.sleep(LOCK_RETRY_DELAY)
+
     return False
 
 
@@ -65,10 +98,13 @@ def main():
         group_id=GROUP_ID,
         auto_offset_reset="earliest",
         enable_auto_commit=False,
-        value_deserializer=lambda value: json.loads(value.decode("utf-8"))
+        value_deserializer=lambda value: json.loads(
+            value.decode("utf-8")
+        )
     )
 
     print("FoodSQL Consumer connected to Kafka and DuckDB.")
+    print("Streaming performance tracking enabled.")
 
     try:
         while True:
@@ -78,15 +114,23 @@ def main():
             )
 
             rows = []
+
             for _, messages in records.items():
                 for message in messages:
+
+                    # Timestamp when this consumer processes the message.
+                    received_at = datetime.now().astimezone()
+
                     event = message.value
+
                     rows.append((
                         str(event["order_id"]),
                         event["status"],
                         float(event["amount"]),
-                        datetime.fromisoformat(event["event_time"]),
-                        event["source"]
+                        parse_timestamp(event["event_time"]),
+                        event["source"],
+                        parse_timestamp(event.get("sent_at")),
+                        received_at
                     ))
 
             if not rows:
@@ -94,9 +138,16 @@ def main():
 
             if write_batch(rows):
                 consumer.commit()
-                print(f"{len(rows)} order(s) saved to DuckDB.")
+
+                print(
+                    f"{len(rows)} order(s) saved to DuckDB."
+                )
+
             else:
-                print("Database busy, batch not saved. Will retry on next poll.")
+                print(
+                    "Database busy, batch not saved. "
+                    "Will retry on next poll."
+                )
 
     except KeyboardInterrupt:
         print("\nConsumer stopped.")
